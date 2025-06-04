@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
-// You can also customize sample size to get more precise measurements
+
 fn bench_bs58_encode(c: &mut Criterion) {
     let public_key_bytes: [u8; 32] = hex::decode("0af764c1b6133a3a0abd7ef9c853791b687ce1e235f9dc8466d886da314dbea7")
         .unwrap()

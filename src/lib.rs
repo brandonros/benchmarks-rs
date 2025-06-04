@@ -1,6 +1,7 @@
 use seq_macro::seq;
 
 const BASE58_ALPHABET: &[u8; 58] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const NUM_CHUNKS: usize = 8;
 const MAX_REQUIRED_LIMBS: usize = 10;
 const DIGITS_PER_LIMB: usize = 5; // log_58(2^32) ≈ 5.462
 const NEXT_LIMB_DIVISOR: u64 = 58_u64.pow(DIGITS_PER_LIMB as u32); // 58^5 = 656,356,768
@@ -16,7 +17,7 @@ const DIVISORS: [u64; DIGITS_PER_LIMB] = {
     divs
 };
 
-pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
+pub fn base58_encode(input: &[u8; 32], output: &mut [u8; 64]) -> usize {
     // Count leading zeros in advance
     let mut num_leading_zeros = 0;
     for &byte in input.iter() {
@@ -31,7 +32,7 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
     let mut limbs = [0u32; MAX_REQUIRED_LIMBS];
     let mut limb_count = 0;
 
-    let chunks = [
+    let chunks: [u32; NUM_CHUNKS] = [
         u32::from_be_bytes([input[0], input[1], input[2], input[3]]),
         u32::from_be_bytes([input[4], input[5], input[6], input[7]]),
         u32::from_be_bytes([input[8], input[9], input[10], input[11]]),
@@ -55,7 +56,7 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
             remaining_carry = (remaining_carry / NEXT_LIMB_DIVISOR) as u64;
         }
 
-        // Add new limbs - unrolled for common cases
+        // Add new limbs
         if remaining_carry > 0 && limb_count < MAX_REQUIRED_LIMBS {
             limbs[limb_count] = (remaining_carry % NEXT_LIMB_DIVISOR) as u32;
             remaining_carry = (remaining_carry / NEXT_LIMB_DIVISOR) as u64;
@@ -69,8 +70,6 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
     });
 
     // Convert limbs to bytes in Base58 format
-    let mut temp_output = [0u8; 64];
-    
     for idx in (0..limb_count).rev() {
         let limb_value = limbs[idx] as u64;
         let output_offset = idx * DIGITS_PER_LIMB;
@@ -78,7 +77,7 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
         // Extract Base58 digits using precomputed divisors
         for i in 0..DIGITS_PER_LIMB {
             let temp = (limb_value / DIVISORS[i]) % 58;
-            temp_output[output_offset + i] = temp as u8;
+            output[output_offset + i] = temp as u8;
         }
     }
 
@@ -86,26 +85,23 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
     let mut result_len = limb_count * DIGITS_PER_LIMB;
 
     // Trim leading zeros in the result
-    while result_len > 0 && temp_output[result_len - 1] == 0 {
+    while result_len > 0 && output[result_len - 1] == 0 {
         result_len -= 1;
     }
 
     // Add a zero byte for each leading zero in the input
     for _ in 0..num_leading_zeros {
-        temp_output[result_len] = 0;
+        output[result_len] = 0;
         result_len += 1;
     }
 
     // Apply alphabet encoding
-    for val in &mut temp_output[..result_len] {
+    for val in &mut output[..result_len] {
         *val = BASE58_ALPHABET[*val as usize];
     }
 
     // Reverse the result
-    temp_output[..result_len].reverse();
-
-    // Copy to output
-    output[..result_len].copy_from_slice(&temp_output[..result_len]);
+    output[..result_len].reverse();
 
     result_len
 }
