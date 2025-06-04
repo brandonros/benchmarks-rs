@@ -1,3 +1,5 @@
+use benchmarks::base58;
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
 
 fn bench_bs58_encode(c: &mut Criterion) {
@@ -17,7 +19,7 @@ fn bench_bs58_encode(c: &mut Criterion) {
     group.bench_function("bs58_encode_custom", |b| {
         b.iter(|| {
             let mut bs58_encoded_public_key = [0u8; 64];
-            let encoded_len = base58::base58_encode(black_box(&public_key_bytes), &mut bs58_encoded_public_key);
+            let encoded_len = base58::base58_encode32(black_box(&public_key_bytes), &mut bs58_encoded_public_key);
             let _ = &bs58_encoded_public_key[0..encoded_len];
         })
     });
