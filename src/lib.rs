@@ -52,13 +52,13 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
         for i in 0..limb_count {
             remaining_carry += (limbs[i] as u64) << 32;
             limbs[i] = (remaining_carry % NEXT_LIMB_DIVISOR) as u32;
-            remaining_carry /= NEXT_LIMB_DIVISOR;
+            remaining_carry = (remaining_carry / NEXT_LIMB_DIVISOR) as u64;
         }
 
         // Add new limbs - unrolled for common cases
         if remaining_carry > 0 && limb_count < MAX_REQUIRED_LIMBS {
             limbs[limb_count] = (remaining_carry % NEXT_LIMB_DIVISOR) as u32;
-            remaining_carry /= NEXT_LIMB_DIVISOR;
+            remaining_carry = (remaining_carry / NEXT_LIMB_DIVISOR) as u64;
             limb_count += 1;
             
             if remaining_carry > 0 && limb_count < MAX_REQUIRED_LIMBS {
@@ -77,8 +77,7 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
 
         // Extract Base58 digits using precomputed divisors
         for i in 0..DIGITS_PER_LIMB {
-            let temp = limb_value / DIVISORS[i];
-            let temp = temp % 58;
+            let temp = (limb_value / DIVISORS[i]) % 58;
             temp_output[output_offset + i] = temp as u8;
         }
     }
@@ -109,4 +108,28 @@ pub fn base58_encode(input: &[u8; 32], output: &mut [u8]) -> usize {
     output[..result_len].copy_from_slice(&temp_output[..result_len]);
 
     result_len
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_encode_correctly() {
+        let public_key_bytes: [u8; 32] = hex::decode("0af764c1b6133a3a0abd7ef9c853791b687ce1e235f9dc8466d886da314dbea7").unwrap().as_slice().try_into().unwrap();
+
+        // bs58 encode public key
+        let mut bs58_encoded_public_key = [0u8; 64];
+        let encoded_len = base58_encode(&public_key_bytes, &mut bs58_encoded_public_key);
+        let bs58_encoded_public_key = &bs58_encoded_public_key[0..encoded_len];
+        let expected = hex::decode("6a6f7365413875757746426a58707558423879453233437845756d596758336a486251677753627166504c").unwrap();
+        assert_eq!(*bs58_encoded_public_key, *expected);
+
+        // utf8
+        use std::string::String;
+        let bs58_encoded_public_key_string = String::from_utf8(bs58_encoded_public_key.to_vec()).unwrap();
+        let expected = "joseA8uuwFBjXpuXB8yE23CxEumYgX3jHbQgwSbqfPL";
+        assert_eq!(bs58_encoded_public_key_string, expected);
+    }
 }
