@@ -163,9 +163,9 @@ pub fn sha512_32bytes_from_bytes(input: &[u8; 32]) -> [u8; 64] {
     hash_to_bytes(u64_output)
 }
 
-pub fn sha512_hash(input: &[u8]) -> [u8; 64] {
+/*pub fn sha512_hash(input: &[u8]) -> [u8; 64] {
     use sha2::{Digest, Sha512};
     let mut hasher = Sha512::new();
     hasher.update(input);
     hasher.finalize().into()
-}
+}*/
