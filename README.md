@@ -10,7 +10,10 @@ cargo test
 ## How to run
 
 ```shell
-cargo bench
+cargo bench base58
+cargo bench ed25519
+cargo bench sha512
+cargo bench xoroshiro
 ```
 
 ## Results

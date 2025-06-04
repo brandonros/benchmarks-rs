@@ -8,7 +8,7 @@ fn bench_xoroshiro(c: &mut Criterion) {
     // Configure sample size and measurement time
     group.sample_size(1000);
     group.measurement_time(std::time::Duration::from_secs(10));
-    group.throughput(Throughput::Bytes(32));
+    group.throughput(Throughput::Elements(1));
     
     group.bench_function("generate_random_private_key", |b| {
         b.iter(|| {
