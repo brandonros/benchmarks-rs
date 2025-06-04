@@ -7,6 +7,7 @@ edition = "2024"
 rand_core = "0.9.3"
 rand_xoshiro = "0.7.0"
 seq-macro = "0.3.6"
+sha2 = "0.10.9"
 
 [dev-dependencies]
 hex = "0.4.3"
@@ -18,4 +19,8 @@ harness = false
 
 [[bench]]
 name = "xoshiro"
+harness = false
+
+[[bench]]
+name = "sha512"
 harness = false
