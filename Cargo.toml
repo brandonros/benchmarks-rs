@@ -19,7 +19,7 @@ name = "base58"
 harness = false
 
 [[bench]]
-name = "xoshiro"
+name = "xoroshiro"
 harness = false
 
 [[bench]]
